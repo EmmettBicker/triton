@@ -92,8 +92,7 @@ public:
   void exitOp(const Scope &scope);
 
   void addMetrics(size_t scopeId,
-                  const std::map<std::string, MetricValueType> &metrics,
-                  bool aggregable);
+                  const std::map<std::string, MetricValueType> &metrics);
 
   void setState(std::optional<Context> context);
 

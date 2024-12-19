@@ -25,6 +25,10 @@ inline std::string replace(const std::string &str, const std::string &src,
   return replaced;
 }
 
+inline bool contain(const std::string &str, const std::string &sub) {
+  return str.find(sub) != std::string::npos;
+}
+
 } // namespace proton
 
 #endif // PROTON_UTILITY_STRING_H_
