@@ -1,7 +1,7 @@
 import threading
+import time
 from functools import wraps
 from typing import Optional, Union
-from time import time
 
 from .flags import get_profiling_on
 from triton._C.libproton import proton as libproton
@@ -84,17 +84,22 @@ class cpu_timed_scope(scope):
     def __init__(self, name: str, metrics: Optional[dict[str, float]] = None) -> None:
         super().__init__(name, metrics)
         self.start_time = None
-        if "cpu_time" in metrics:
+        if metrics and "cpu_time" in metrics:
             raise ValueError("The metric name 'cpu_time' is reserved.")
 
     def _enter_scope(self):
+        if not get_profiling_on():
+            return
         self.start_time = time.time_ns()
         super()._enter_scope()
 
     def _exit_scope(self):
+        if not get_profiling_on():
+            return
         super()._exit_scope()
         if self.start_time is not None:
             cpu_time = time.time_ns() - self.start_time
+            print(self.id, cpu_time)
             libproton.add_metrics(self.id, {"cpu_time (ns)(exc)": cpu_time})
 
 

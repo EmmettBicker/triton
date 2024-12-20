@@ -101,7 +101,11 @@ private:
 
 void TreeData::init() { tree = std::make_unique<Tree>(); }
 
-void TreeData::startOp(const Scope &scope) {
+void TreeData::startOp(const Scope &scope) { enterScope(scope); }
+
+void TreeData::stopOp(const Scope &scope) {}
+
+void TreeData::enterScope(const Scope &scope) {
   // enterOp and addMetric maybe called from different threads
   std::unique_lock<std::shared_mutex> lock(mutex);
   std::vector<Context> contexts;
@@ -112,7 +116,7 @@ void TreeData::startOp(const Scope &scope) {
   scopeIdToContextId[scope.scopeId] = contextId;
 }
 
-void TreeData::stopOp(const Scope &scope) {}
+void TreeData::exitScope(const Scope &scope) {}
 
 size_t TreeData::addScope(size_t parentScopeId, const std::string &name) {
   std::unique_lock<std::shared_mutex> lock(mutex);

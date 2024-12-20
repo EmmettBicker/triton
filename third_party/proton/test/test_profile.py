@@ -157,6 +157,24 @@ def test_scope_backward(tmp_path: pathlib.Path):
     assert len(data[0]["children"]) == 4
 
 
+def test_cpu_timed_scope(tmp_path: pathlib.Path):
+    temp_file = tmp_path / "test_cpu_timed_scope.hatchet"
+    proton.start(str(temp_file.with_suffix("")))
+    with proton.cpu_timed_scope("test0"):
+        with proton.cpu_timed_scope("test1"):
+            torch.ones((100, 100), device="cuda")
+    proton.finalize()
+    with temp_file.open() as f:
+        data = json.load(f)
+    print(data)
+    assert len(data[0]["children"]) == 1
+    test0_frame = data[0]["children"][0]
+    assert test0_frame["metrics"]["cpu_time (ns)(exc)"] > 0
+    test1_frame = test0_frame["children"][0]
+    assert test1_frame["metrics"]["cpu_time (ns)(exc)"] > 0
+    assert test1_frame["metrics"]["time (ns)"] > 0
+
+
 def test_hook(tmp_path: pathlib.Path):
 
     def metadata_fn(grid: tuple, metadata: NamedTuple, args: dict):
