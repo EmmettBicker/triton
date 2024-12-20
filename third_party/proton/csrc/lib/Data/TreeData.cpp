@@ -106,7 +106,6 @@ void TreeData::startOp(const Scope &scope) { enterScope(scope); }
 void TreeData::stopOp(const Scope &scope) {}
 
 void TreeData::enterScope(const Scope &scope) {
-  // enterOp and addMetric maybe called from different threads
   std::unique_lock<std::shared_mutex> lock(mutex);
   std::vector<Context> contexts;
   if (contextSource != nullptr)
@@ -282,7 +281,6 @@ void TreeData::dumpHatchet(std::ostream &os) const {
 }
 
 void TreeData::doDump(std::ostream &os, OutputFormat outputFormat) const {
-  std::shared_lock<std::shared_mutex> lock(mutex);
   if (outputFormat == OutputFormat::Hatchet) {
     dumpHatchet(os);
   } else {

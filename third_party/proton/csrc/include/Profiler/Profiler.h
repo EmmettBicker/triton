@@ -26,7 +26,6 @@ public:
   /// Start the profiler.
   /// If the profiler is already started, this function does nothing.
   Profiler *start() {
-    std::unique_lock<std::shared_mutex> lock(mutex);
     if (this->initializedCount == 0)
       this->doStart();
     this->initializedCount++;
@@ -36,14 +35,12 @@ public:
   /// Flush the profiler's data from the device to the host.
   /// It doesn't stop the profiler.
   Profiler *flush() {
-    std::unique_lock<std::shared_mutex> lock(mutex);
     this->doFlush();
     return this;
   }
 
   /// Stop the profiler.
   Profiler *stop() {
-    std::unique_lock<std::shared_mutex> lock(mutex);
     if (this->initializedCount == 0)
       return this;
     this->initializedCount--;
@@ -78,6 +75,8 @@ protected:
   virtual void doFlush() = 0;
   virtual void doStop() = 0;
 
+  // `dataSet` can be accessed by both the user thread and the background
+  // threads
   mutable std::shared_mutex mutex;
   std::set<Data *> dataSet;
 

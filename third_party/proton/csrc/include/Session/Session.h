@@ -6,8 +6,8 @@
 #include "Utility/Singleton.h"
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
-#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -134,7 +134,7 @@ private:
     }
   }
 
-  mutable std::shared_mutex mutex;
+  mutable std::mutex mutex;
 
   size_t nextSessionId{};
   // path -> session id
