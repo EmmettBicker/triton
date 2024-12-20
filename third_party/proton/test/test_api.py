@@ -130,6 +130,10 @@ def test_scope_metrics(tmp_path: pathlib.Path):
     proton.enter_scope("test3", metrics={"a": 1.0})
     proton.exit_scope()
 
+    # exit_scope can also take metrics
+    proton.enter_scope("test4")
+    proton.exit_scope(metrics={"b": 1.0})
+
     proton.finalize()
     assert temp_file.exists()
     with temp_file.open() as f:
@@ -138,6 +142,8 @@ def test_scope_metrics(tmp_path: pathlib.Path):
     for child in data[0]["children"]:
         if child["frame"]["name"] == "test3":
             assert child["metrics"]["a"] == 2.0
+        elif child["frame"]["name"] == "test4":
+            assert child["metrics"]["b"] == 1.0
 
 
 def test_scope_properties(tmp_path: pathlib.Path):
@@ -145,20 +151,20 @@ def test_scope_properties(tmp_path: pathlib.Path):
     proton.start(str(temp_file.with_suffix("")))
     # Test different scope creation methods
     # Different from metrics, properties could be str
-    with proton.scope("test0", properties={"a": "1"}):
+    with proton.scope("test0", {"a (pty)": "1"}):
         pass
 
-    @proton.scope("test1", properties={"a": "1"})
+    @proton.scope("test1", {"a (pty)": "1"})
     def foo():
         pass
 
     foo()
 
     # Properties do not aggregate
-    proton.enter_scope("test2", properties={"a": 1.0})
+    proton.enter_scope("test2", {"a (pty)": 1.0})
     proton.exit_scope()
 
-    proton.enter_scope("test2", properties={"a": 1.0})
+    proton.enter_scope("test2", {"a (pty)": 1.0})
     proton.exit_scope()
 
     proton.finalize()
@@ -170,6 +176,10 @@ def test_scope_properties(tmp_path: pathlib.Path):
             assert child["metrics"]["a"] == 1.0
         elif child["frame"]["name"] == "test0":
             assert child["metrics"]["a"] == "1"
+
+
+def test_scope_exclusive(tmp_path: pathlib.Path):
+    pass
 
 
 def test_state(tmp_path: pathlib.Path):

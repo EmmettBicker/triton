@@ -14,9 +14,9 @@ public:
 
   void addMetric(size_t scopeId, std::shared_ptr<Metric> metric) override;
 
-  void addMetrics(size_t scopeId,
-                  const std::map<std::string, MetricValueType> &metrics,
-                  bool aggregable) override;
+  void
+  addMetrics(size_t scopeId,
+             const std::map<std::string, MetricValueType> &metrics) override;
 
 protected:
   void startOp(const Scope &scope) override final;

@@ -16,13 +16,15 @@ def match_available_metrics(metrics, raw_metrics):
     if metrics:
         for metric in metrics:
             metric = metric.lower()
+            suffix = "(exc)" if "(exc)" in metric else "(inc)"
             for raw_metric in raw_metrics:
                 raw_metric_no_unit = raw_metric.split("(")[0].strip().lower()
                 if metric in (raw_metric, raw_metric_no_unit):
-                    ret.append(raw_metric + " (inc)")
+                    ret.append(raw_metric + f" {suffix}")
                     break
     else:
-        ret = [raw_metrics[0] + " (inc)"]
+        suffix = "(exc)" if "(exc)" in raw_metrics[0] else "(inc)"
+        ret = [raw_metrics[0] + f" {suffix}"]
     if len(ret) == 0:
         raise RuntimeError(f"Metric {metric} is not found. Use the --list flag to list available metrics")
     return ret
@@ -113,6 +115,11 @@ def get_min_time_bytes(df, device_info):
 FactorDict = namedtuple("FactorDict", ["name", "factor"])
 time_factor_dict = FactorDict("time", {"time/s": 1, "time/ms": 1e-3, "time/us": 1e-6, "time/ns": 1e-9})
 avg_time_factor_dict = FactorDict("avg_time", {f"avg_{key}": value for key, value in time_factor_dict.factor.items()})
+cpu_time_factor_dict = FactorDict("cpu_time",
+                                  {"cpu_time/s": 1, "cpu_time/ms": 1e-3, "cpu_time/us": 1e-6, "cpu_time/ns": 1e-9})
+avg_cpu_time_factor_dict = FactorDict("avg_cpu_time",
+                                      {f"avg_{key}": value
+                                       for key, value in cpu_time_factor_dict.factor.items()})
 bytes_factor_dict = FactorDict("bytes", {"byte/s": 1, "gbyte/s": 1e9, "tbyte/s": 1e12})
 
 derivable_metrics = {
@@ -145,9 +152,9 @@ def derive_metrics(gf, metrics, raw_metrics, device_info):
             min_time_bytes = get_min_time_bytes(gf.dataframe, device_info)
             min_time_flops = get_min_time_flops(gf.dataframe, device_info)
             time_sec = get_time_seconds(gf.dataframe)
-            gf.dataframe["util (inc)"] = min_time_flops["min_time"].combine(min_time_bytes["min_time"], max) / time_sec
-            gf.dataframe.loc[internal_frame_indices, "util (inc)"] = np.nan
-            derived_metrics.append("util (inc)")
+            gf.dataframe["util (exc)"] = min_time_flops["min_time"].combine(min_time_bytes["min_time"], max) / time_sec
+            gf.dataframe.loc[internal_frame_indices, "util (exc)"] = np.nan
+            derived_metrics.append("util (exc)")
         elif metric in derivable_metrics:  # flop<width>/s, <t/g>byte/s
             derivable_metric = derivable_metrics[metric]
             metric_name = derivable_metric.name
@@ -156,17 +163,20 @@ def derive_metrics(gf, metrics, raw_metrics, device_info):
             gf.dataframe[f"{metric} (inc)"] = (gf.dataframe[matched_metric_name] / (get_time_seconds(gf.dataframe)) /
                                                metric_factor_dict[metric])
             derived_metrics.append(f"{metric} (inc)")
-        elif metric in time_factor_dict.factor:
-            metric_time_unit = time_factor_dict.name + "/" + metric.split("/")[1]
-            gf.dataframe[f"{metric} (inc)"] = (get_time_seconds(gf.dataframe) /
-                                               time_factor_dict.factor[metric_time_unit])
-            derived_metrics.append(f"{metric} (inc)")
-        elif metric in avg_time_factor_dict.factor:
-            metric_time_unit = avg_time_factor_dict.name + "/" + metric.split("/")[1]
-            gf.dataframe[f"{metric} (inc)"] = (get_time_seconds(gf.dataframe) / gf.dataframe['count'] /
-                                               avg_time_factor_dict.factor[metric_time_unit])
-            gf.dataframe.loc[internal_frame_indices, f"{metric} (inc)"] = np.nan
-            derived_metrics.append(f"{metric} (inc)")
+        elif metric in time_factor_dict.factor or metric in cpu_time_factor_dict.factor:
+            factor_dict = time_factor_dict.factor if metric in time_factor_dict.factor else cpu_time_factor_dict.factor
+            metric_time_unit = factor_dict.name + "/" + metric.split("/")[1]
+            suffix = " (exc)" if metric in cpu_time_factor_dict.factor else " (inc)"
+            gf.dataframe[f"{metric} {suffix}"] = (get_time_seconds(gf.dataframe) / factor_dict.factor[metric_time_unit])
+            derived_metrics.append(f"{metric} {suffix}")
+        elif metric in avg_time_factor_dict.factor or metric in avg_cpu_time_factor_dict.factor:
+            factor_dict = avg_time_factor_dict.factor if metric in avg_time_factor_dict.factor else avg_cpu_time_factor_dict.factor
+            metric_time_unit = factor_dict.name + "/" + metric.split("/")[1]
+            suffix = " (exc)" if metric in avg_cpu_time_factor_dict.factor else " (inc)"
+            gf.dataframe[f"{metric} {suffix}"] = (get_time_seconds(gf.dataframe) / gf.dataframe['count'] /
+                                                  factor_dict.factor[metric_time_unit])
+            gf.dataframe.loc[internal_frame_indices, f"{metric} {suffix}"] = np.nan
+            derived_metrics.append(f"{metric} {suffix}")
         else:
             metric_name_and_unit = metric.split("/")
             metric_name = metric_name_and_unit[0]

@@ -136,7 +136,7 @@ size_t TreeData::addScope(size_t parentScopeId, const std::string &name) {
 void TreeData::addMetric(size_t scopeId, std::shared_ptr<Metric> metric) {
   std::unique_lock<std::shared_mutex> lock(mutex);
   auto scopeIdIt = scopeIdToContextId.find(scopeId);
-  // The profile data is deactived, ignore the metric
+  // The profile data is deactivated, ignore the metric
   if (scopeIdIt == scopeIdToContextId.end())
     return;
   auto contextId = scopeIdIt->second;
@@ -147,9 +147,8 @@ void TreeData::addMetric(size_t scopeId, std::shared_ptr<Metric> metric) {
     node.metrics[metric->getKind()]->updateMetric(*metric);
 }
 
-void TreeData::addMetrics(size_t scopeId,
-                          const std::map<std::string, MetricValueType> &metrics,
-                          bool aggregable) {
+void TreeData::addMetrics(
+    size_t scopeId, const std::map<std::string, MetricValueType> &metrics) {
   std::unique_lock<std::shared_mutex> lock(mutex);
   auto scopeIdIt = scopeIdToContextId.find(scopeId);
   auto contextId = Tree::TreeNode::DummyId;
@@ -164,10 +163,10 @@ void TreeData::addMetrics(size_t scopeId,
   }
   auto &node = tree->getNode(contextId);
   for (auto [metricName, metricValue] : metrics) {
-    if (node.flexibleMetrics.find(metricName) == node.flexibleMetrics.end())
-      node.flexibleMetrics.emplace(
-          metricName, FlexibleMetric(metricName, metricValue, aggregable));
-    else {
+    if (node.flexibleMetrics.find(metricName) == node.flexibleMetrics.end()) {
+      node.flexibleMetrics.emplace(metricName,
+                                   FlexibleMetric(metricName, metricValue));
+    } else {
       node.flexibleMetrics.at(metricName).updateValue(metricValue);
     }
   }

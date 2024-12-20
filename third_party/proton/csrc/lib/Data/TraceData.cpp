@@ -18,8 +18,7 @@ void TraceData::addMetric(size_t scopeId, std::shared_ptr<Metric> metric) {
 }
 
 void TraceData::addMetrics(
-    size_t scopeId, const std::map<std::string, MetricValueType> &metrics,
-    bool aggregable) {
+    size_t scopeId, const std::map<std::string, MetricValueType> &metrics) {
   throw NotImplemented();
 }
 

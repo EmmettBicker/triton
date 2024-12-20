@@ -20,26 +20,21 @@ public:
 
   /// Add a new scope to the data.
   /// If the scope is already present, add a child scope under/inside it.
-  /// [MT] The implementation must be thread-safe.
   virtual size_t addScope(size_t scopeId, const std::string &name = {}) = 0;
 
   /// Add a single metric to the data.
-  /// [MT] The implementation must be thread-safe.
   virtual void addMetric(size_t scopeId, std::shared_ptr<Metric> metric) = 0;
 
   /// Add multiple metrics to the data.
-  /// [MT] The implementation must be thread-safe.
-  virtual void addMetrics(size_t scopeId,
-                          const std::map<std::string, MetricValueType> &metrics,
-                          bool aggregable) = 0;
+  virtual void
+  addMetrics(size_t scopeId,
+             const std::map<std::string, MetricValueType> &metrics) = 0;
 
   /// Dump the data to the given output format.
-  /// [MT] Thread-safe.
   void dump(OutputFormat outputFormat);
 
 protected:
   /// The actual implementation of the dump operation.
-  /// [MT] Thread-safe.
   virtual void doDump(std::ostream &os, OutputFormat outputFormat) const = 0;
 
   mutable std::shared_mutex mutex;
