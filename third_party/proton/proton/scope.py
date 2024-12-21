@@ -99,7 +99,6 @@ class cpu_timed_scope(scope):
         super()._exit_scope()
         if self.start_time is not None:
             cpu_time = time.time_ns() - self.start_time
-            print(self.id, cpu_time)
             libproton.add_metrics(self.id, {"cpu_time (ns)(exc)": cpu_time})
 
 

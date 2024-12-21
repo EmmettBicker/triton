@@ -10,7 +10,7 @@ public:
   using Data::Data;
   virtual ~TraceData() = default;
 
-  size_t addScope(size_t scopeId, const std::string &name) override;
+  size_t addScope(size_t parentScopeId, const std::string &name) override;
 
   void addMetric(size_t scopeId, std::shared_ptr<Metric> metric) override;
 

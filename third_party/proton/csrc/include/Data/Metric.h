@@ -117,8 +117,8 @@ public:
   bool isExclusive(int valueId) const override { return false; }
 
 private:
-  bool property;
-  bool exclusive;
+  bool property{};
+  bool exclusive{};
   const std::string valueName;
 };
 

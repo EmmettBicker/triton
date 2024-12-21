@@ -95,7 +95,7 @@ public:
 
 private:
   size_t nextContextId = TreeNode::RootId + 1;
-  // tree node id->tree node
+  // tree node id -> tree node
   std::map<size_t, TreeNode> treeNodeMap;
 };
 
@@ -117,22 +117,15 @@ void TreeData::enterScope(const Scope &scope) {
 
 void TreeData::exitScope(const Scope &scope) {}
 
-size_t TreeData::addScope(size_t parentScopeId, const std::string &name) {
+size_t TreeData::addScope(size_t scopeId, const std::string &name) {
   std::unique_lock<std::shared_mutex> lock(mutex);
-  auto scopeIdIt = scopeIdToContextId.find(parentScopeId);
-  auto scopeId = parentScopeId;
-  if (scopeIdIt == scopeIdToContextId.end()) {
-    std::vector<Context> contexts;
-    if (contextSource != nullptr)
-      contexts = contextSource->getContexts();
-    // Record the parent context
-    scopeIdToContextId[parentScopeId] = tree->addNode(contexts);
-  } else {
-    // Add a new context under it and update the context
-    scopeId = Scope::getNewScopeId();
-    scopeIdToContextId[scopeId] =
-        tree->addNode(Context(name), scopeIdIt->second);
-  }
+  auto scopeIdIt = scopeIdToContextId.find(scopeId);
+  if (scopeIdIt == scopeIdToContextId.end())
+    throw std::runtime_error("ScopeId not found");
+
+  // Add a new context under it and update the context
+  scopeId = Scope::getNewScopeId();
+  scopeIdToContextId[scopeId] = tree->addNode(Context(name), scopeIdIt->second);
   return scopeId;
 }
 
@@ -154,16 +147,10 @@ void TreeData::addMetrics(
     size_t scopeId, const std::map<std::string, MetricValueType> &metrics) {
   std::unique_lock<std::shared_mutex> lock(mutex);
   auto scopeIdIt = scopeIdToContextId.find(scopeId);
-  auto contextId = Tree::TreeNode::DummyId;
-  if (scopeIdIt == scopeIdToContextId.end()) {
-    if (contextSource == nullptr)
-      throw std::runtime_error("ContextSource is not set");
-    // Attribute the metric to the last context
-    std::vector<Context> contexts = contextSource->getContexts();
-    contextId = tree->addNode(contexts);
-  } else {
-    contextId = scopeIdIt->second;
-  }
+  // The profile data is deactivated, ignore the metric
+  if (scopeIdIt == scopeIdToContextId.end())
+    return;
+  auto contextId = scopeIdIt->second;
   auto &node = tree->getNode(contextId);
   for (auto [metricName, metricValue] : metrics) {
     if (node.flexibleMetrics.find(metricName) == node.flexibleMetrics.end()) {
