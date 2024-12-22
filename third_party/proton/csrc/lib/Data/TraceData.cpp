@@ -5,9 +5,9 @@
 
 namespace proton {
 
-void TraceData::startOp(const Scope &scope) { throw NotImplemented(); }
+void TraceData::enterScope(const Scope &scope) { throw NotImplemented(); }
 
-void TraceData::stopOp(const Scope &scope) { throw NotImplemented(); }
+void TraceData::exitScope(const Scope &scope) { throw NotImplemented(); }
 
 size_t TraceData::addScope(size_t scopeId, const std::string &name) {
   throw NotImplemented();

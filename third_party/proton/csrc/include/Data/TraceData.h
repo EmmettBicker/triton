@@ -19,9 +19,10 @@ public:
              const std::map<std::string, MetricValueType> &metrics) override;
 
 protected:
-  void startOp(const Scope &scope) override final;
+  // ScopeInterface
+  void enterScope(const Scope &scope) override final;
 
-  void stopOp(const Scope &scope) override final;
+  void exitScope(const Scope &scope) override final;
 
 private:
   void doDump(std::ostream &os, OutputFormat outputFormat) const override;

@@ -56,7 +56,6 @@ protected:
   struct ThreadState {
     ConcreteProfilerT &profiler;
     size_t scopeId{Scope::DummyScopeId};
-    std::set<Data *> dataSet;
 
     ThreadState(ConcreteProfilerT &profiler) : profiler(profiler) {}
 
@@ -64,22 +63,16 @@ protected:
       if (profiler.isOpInProgress())
         return;
       scopeId = Scope::getNewScopeId();
+      profiler.enterOp(Scope(scopeId));
       profiler.correlation.apiExternIds.insert(scopeId);
-      dataSet = profiler.getDataSet();
-      for (auto data : dataSet)
-        data->enterOp(Scope(scopeId));
-      profiler.correlation.pushExternId(scopeId);
-      profiler.setOpInProgress(true);
+      for (auto data : profiler.getDataSet())
+        data->addScope(scopeId);
     }
 
     void exitOp() {
       if (!profiler.isOpInProgress())
         return;
-      for (auto data : dataSet)
-        data->exitOp(Scope(scopeId));
-      scopeId = Scope::DummyScopeId;
-      profiler.correlation.popExternId();
-      profiler.setOpInProgress(false);
+      profiler.exitOp(Scope(scopeId));
     }
   };
 

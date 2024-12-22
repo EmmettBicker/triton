@@ -12,7 +12,7 @@ namespace proton {
 
 enum class OutputFormat { Hatchet, Count };
 
-class Data : public ThreadLocalOpInterface {
+class Data : public ScopeInterface {
 public:
   Data(const std::string &path, ContextSource *contextSource = nullptr)
       : path(path), contextSource(contextSource) {}

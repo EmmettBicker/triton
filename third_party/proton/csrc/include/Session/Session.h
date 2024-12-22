@@ -39,13 +39,16 @@ private:
 
   template <typename T> std::vector<T *> getInterfaces() {
     std::vector<T *> interfaces;
+    // XXX(Keren): There's an implicit order between contextSource and
+    // profiler/data. The latter two rely on the contextSource to obtain the
+    // context, so we need to add the contextSource first.
+    if (auto interface = dynamic_cast<T *>(contextSource.get())) {
+      interfaces.push_back(interface);
+    }
     if (auto interface = dynamic_cast<T *>(profiler)) {
       interfaces.push_back(interface);
     }
     if (auto interface = dynamic_cast<T *>(data.get())) {
-      interfaces.push_back(interface);
-    }
-    if (auto interface = dynamic_cast<T *>(contextSource.get())) {
       interfaces.push_back(interface);
     }
     return interfaces;

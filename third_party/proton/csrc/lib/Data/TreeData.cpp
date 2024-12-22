@@ -101,16 +101,11 @@ private:
 
 void TreeData::init() { tree = std::make_unique<Tree>(); }
 
-void TreeData::startOp(const Scope &scope) { enterScope(scope); }
-
-void TreeData::stopOp(const Scope &scope) {}
-
 void TreeData::enterScope(const Scope &scope) {
   std::unique_lock<std::shared_mutex> lock(mutex);
   std::vector<Context> contexts;
   if (contextSource != nullptr)
     contexts = contextSource->getContexts();
-  contexts.push_back(Context(scope.name));
   auto contextId = tree->addNode(contexts);
   scopeIdToContextId[scope.scopeId] = contextId;
 }
@@ -120,12 +115,18 @@ void TreeData::exitScope(const Scope &scope) {}
 size_t TreeData::addScope(size_t scopeId, const std::string &name) {
   std::unique_lock<std::shared_mutex> lock(mutex);
   auto scopeIdIt = scopeIdToContextId.find(scopeId);
-  if (scopeIdIt == scopeIdToContextId.end())
-    throw std::runtime_error("ScopeId not found");
-
-  // Add a new context under it and update the context
-  scopeId = Scope::getNewScopeId();
-  scopeIdToContextId[scopeId] = tree->addNode(Context(name), scopeIdIt->second);
+  if (scopeIdIt == scopeIdToContextId.end()) {
+    // Obtain the current context
+    std::vector<Context> contexts;
+    if (contextSource != nullptr)
+      contexts = contextSource->getContexts();
+    scopeIdToContextId[scopeId] = tree->addNode(contexts);
+  } else {
+    // Add a new context under it and update the context
+    scopeId = Scope::getNewScopeId();
+    scopeIdToContextId[scopeId] =
+        tree->addNode(Context(name), scopeIdIt->second);
+  }
   return scopeId;
 }
 

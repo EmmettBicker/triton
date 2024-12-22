@@ -8,7 +8,7 @@
 
 namespace proton {
 
-class TreeData : public Data, public ScopeInterface {
+class TreeData : public Data {
 public:
   TreeData(const std::string &path, ContextSource *contextSource);
   virtual ~TreeData();
@@ -24,11 +24,6 @@ public:
              const std::map<std::string, MetricValueType> &metrics) override;
 
 protected:
-  // OpInterface
-  void startOp(const Scope &scope) override;
-
-  void stopOp(const Scope &scope) override;
-
   // ScopeInterface
   void enterScope(const Scope &scope) override;
 

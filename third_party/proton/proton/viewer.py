@@ -140,7 +140,7 @@ for width in TritonHook.flops_width:
 
 def derive_metrics(gf, metrics, raw_metrics, device_info):
     derived_metrics = []
-    internal_frame_indices = gf.dataframe["device_id"].isna()
+    internal_frame_indices = gf.dataframe["device_id (exc)"].isna()
 
     def get_time_seconds(df):
         time_metric_name = match_available_metrics([time_factor_dict.name], raw_metrics)[0]
@@ -164,18 +164,17 @@ def derive_metrics(gf, metrics, raw_metrics, device_info):
                                                metric_factor_dict[metric])
             derived_metrics.append(f"{metric} (inc)")
         elif metric in time_factor_dict.factor or metric in cpu_time_factor_dict.factor:
-            factor_dict = time_factor_dict.factor if metric in time_factor_dict.factor else cpu_time_factor_dict.factor
+            factor_dict = time_factor_dict if metric in time_factor_dict else cpu_time_factor_dict
             metric_time_unit = factor_dict.name + "/" + metric.split("/")[1]
             suffix = " (exc)" if metric in cpu_time_factor_dict.factor else " (inc)"
             gf.dataframe[f"{metric} {suffix}"] = (get_time_seconds(gf.dataframe) / factor_dict.factor[metric_time_unit])
             derived_metrics.append(f"{metric} {suffix}")
         elif metric in avg_time_factor_dict.factor or metric in avg_cpu_time_factor_dict.factor:
-            factor_dict = avg_time_factor_dict.factor if metric in avg_time_factor_dict.factor else avg_cpu_time_factor_dict.factor
+            factor_dict = avg_time_factor_dict if metric in avg_time_factor_dict else avg_cpu_time_factor_dict
             metric_time_unit = factor_dict.name + "/" + metric.split("/")[1]
             suffix = " (exc)" if metric in avg_cpu_time_factor_dict.factor else " (inc)"
             gf.dataframe[f"{metric} {suffix}"] = (get_time_seconds(gf.dataframe) / gf.dataframe['count'] /
                                                   factor_dict.factor[metric_time_unit])
-            gf.dataframe.loc[internal_frame_indices, f"{metric} {suffix}"] = np.nan
             derived_metrics.append(f"{metric} {suffix}")
         else:
             metric_name_and_unit = metric.split("/")
